@@ -1,0 +1,19 @@
+--- a/src/train/train_mlflow.py	2026-11-03 20:46:54.000000000 +0000
++++ b/src/train/train_mlflow.py	2026-11-24 18:43:17.042716033 +0000
+@@ -111,7 +111,15 @@
+ 
+             # the model, with its signature (inputs and outputs) and an example row
+             signature = infer_signature(X_te, proba)
+-            info = mlflow.sklearn.log_model(model, name="model", signature=signature, input_example=X_te.head(3))
++            # MLflow 3.x saves sklearn models with skops, which refuses tree models unless their node-storage type
++            # is trusted. We trained this model ourselves, so we trust that one type and nothing else.
++            info = mlflow.sklearn.log_model(
++                model,
++                name="model",
++                signature=signature,
++                input_example=X_te.head(3),
++                skops_trusted_types=["sklearn.tree._tree.Tree"],
++            )
+             mlflow.set_tag("model_uri", info.model_uri)
+ 
+             print(f"{name:18s} run {run.info.run_id[:8]}  auc {metrics['auc']:.3f}  f1 {metrics['f1']:.3f}  "
